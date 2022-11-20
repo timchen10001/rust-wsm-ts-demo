@@ -30,8 +30,47 @@ fn main() {
 
     println!("{}", sum);
 
+    let message = String::from("Hello");
+    // let message_2 = message;
+
+    // println!("1: {}, 2: {}", message_2, message);
+    // let message_2 = print_message(message);
+
+    // println!("{}", message_2);
+
+    // let mut age = u8::from(20);
+    // // let a: &mut u8 = &mut age;
+    // extend_age(&mut age);
+
+    // println!("new age: {}", age);
+
+    let mut message = String::from("Hello");
+    let message_3 = &message;
+    println!("message_3: {}", message_3);
+    let message_2 = &mut message;
+    unpredictable_mutate(message_2);
+    println!("message: {}", message);
+
+    (* &mut message).push_str(" 123");
+    println!("{}", message);
 }
 
 fn add(x: u32, y: u32) -> u32 {
     x + y
+}
+
+fn print_message(mut a: String) -> String {
+    println!("{}", a);
+    a.push_str("123");
+    // let c = a;
+    a
+}
+
+fn extend_age(age: &mut u8) {
+    *age += 100;
+    println!("inner age: {}", age);
+}
+
+fn unpredictable_mutate(val: &mut String) {
+    val.push_str(" World");
 }
