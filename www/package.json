@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "copy-webpack-plugin": "^11.0.0",
+    "rxjs": "^7.8.1",
     "snake-game": "file:../pkg",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"

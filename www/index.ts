@@ -1,3 +1,4 @@
+import { from, shareReplay, take } from "rxjs";
 import init, { Direction, World } from "snake-game";
 
 declare global {
@@ -9,7 +10,9 @@ declare global {
 // let rust call the js method.
 window.log = console.log;
 
-init().then((_) => {
+const wasm$ = from(init()).pipe(shareReplay(1)).pipe(take(1));
+
+wasm$.subscribe(() => {
   const CELL_SIZE = 20; // one cell pixel
   const WORLD_WIDTH = 10;
   const SNAKE_SPAWN_IDX = Date.now() % (WORLD_WIDTH * WORLD_WIDTH); // random number
