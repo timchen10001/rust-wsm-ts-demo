@@ -7,7 +7,7 @@ use wee_alloc::WeeAlloc;
 static ALLOC: WeeAlloc = WeeAlloc::INIT;
 
 #[wasm_bindgen]
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Direction {
     Up,
     Right,
@@ -65,19 +65,46 @@ impl World {
     pub fn update(&mut self) {
         let snake_idx = self.snake_head_idx();
         let row = snake_idx / self.width;
+        let col = snake_idx % self.width;
 
         // log(format!("row: {}", row).as_str());
 
-        if self.snake.direction == Direction::Right {
-            let next_col = (snake_idx + 1) % self.width;
-            // log(format!("next_col: {}", next_col).as_str());
-            self.snake.body[0].0 = (row * self.width) + next_col;
+        match self.snake.direction {
+            Direction::Right => {
+                let next_col = (col + 1) % self.width;
+                self.snake.body[0].0 = (row * self.width) + next_col;
+            }
+            Direction::Left => {
+                let next_col = if col > 0 {
+                    (col - 1) % self.width
+                } else {
+                    self.width - 1
+                };
+                self.snake.body[0].0 = (row * self.width) + next_col;
+            }
+            Direction::Up => {
+                let next_row = if row > 0 {
+                    (row - 1) % self.width
+                } else {
+                    self.width - 1
+                };
+                self.snake.body[0].0 = (next_row * self.width) + col;
+            }
+            Direction::Down => {
+                let next_row = (row + 1) % self.width;
+                self.snake.body[0].0 = (next_row * self.width) + col;
+            }
         }
 
-        if self.snake.direction == Direction::Left {
-            let next_col = (snake_idx - 1) % self.width;
-            self.snake.body[0].0 = (row * self.width) + next_col;
-        }
+        // if self.snake.direction == Direction::Right {
+        //     let next_col = (snake_idx + 1) % self.width;
+        //     // log(format!("next_col: {}", next_col).as_str());
+        //     self.snake.body[0].0 = (row * self.width) + next_col;
+        // }
+        // if self.snake.direction == Direction::Left {
+        //     let next_col = (snake_idx - 1) % self.width;
+        //     self.snake.body[0].0 = (row * self.width) + next_col;
+        // }
     }
 }
 
