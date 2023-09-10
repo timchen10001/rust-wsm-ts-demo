@@ -25,10 +25,10 @@ struct Snake {
 }
 
 impl Snake {
-    pub fn new(spawn_index: usize) -> Snake {
+    pub fn new(spawn_index: usize, direction: Direction) -> Snake {
         Snake {
             body: vec![SnakeCell(spawn_index, spawn_index)],
-            direction: Direction::Right,
+            direction,
         }
     }
 }
@@ -42,11 +42,11 @@ pub struct World {
 
 #[wasm_bindgen]
 impl World {
-    pub fn new(width: usize, spawn_index: usize) -> World {
+    pub fn new(width: usize, spawn_index: usize, direction: Direction) -> World {
         World {
             width,
             size: width * width,
-            snake: Snake::new(spawn_index),
+            snake: Snake::new(spawn_index, direction),
         }
     }
 
@@ -62,13 +62,9 @@ impl World {
         self.snake.body[0].0
     }
 
-    fn cell_to_index(&self, row: usize, col: usize) -> usize {
-        (row * self.width) + col
-    }
-
     pub fn update(&mut self) {
         let snake_idx = self.snake_head_idx();
-        let (row, col) = (snake_idx / self.width, snake_idx % self.width);
+        let (row, col) = self.index_to_cell(snake_idx);
 
         let (row, col) = match self.snake.direction {
             Direction::Right => {
@@ -97,7 +93,20 @@ impl World {
             }
         };
 
-        self.snake.body[0].0 = self.cell_to_index(row, col);
+        let next_snake_head_idx = self.cell_to_index(row, col);
+        self.set_snake_head(next_snake_head_idx);
+    }
+
+    fn set_snake_head(&mut self, idx: usize) {
+        self.snake.body[0].0 = idx
+    }
+
+    fn index_to_cell(&self, index: usize) -> (usize, usize) {
+        (index / self.width, index % self.width)
+    }
+
+    fn cell_to_index(&self, row: usize, col: usize) -> usize {
+        (row * self.width) + col
     }
 }
 

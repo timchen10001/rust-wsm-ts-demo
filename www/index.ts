@@ -1,4 +1,4 @@
-import init, { World } from "snake-game";
+import init, { Direction, World } from "snake-game";
 
 declare global {
   interface Window {
@@ -14,7 +14,7 @@ init().then((_) => {
   const WORLD_WIDTH = 10;
   const SNAKE_SPAWN_IDX = Date.now() % (WORLD_WIDTH * WORLD_WIDTH); // random number
 
-  const world = World.new(WORLD_WIDTH, SNAKE_SPAWN_IDX);
+  const world = World.new(WORLD_WIDTH, SNAKE_SPAWN_IDX, Direction.Down);
   const worldWidth = world.width();
 
   const canvas = <HTMLCanvasElement>document.getElementById("snake-canvas");
