@@ -31,6 +31,10 @@ impl Snake {
             direction,
         }
     }
+
+    pub fn change_direction(&mut self, next_direction: Direction) {
+        self.direction = next_direction;
+    }
 }
 
 #[wasm_bindgen]
@@ -60,6 +64,10 @@ impl World {
 
     pub fn snake_head_idx(&self) -> usize {
         self.snake.body[0].0
+    }
+
+    pub fn change_snake_direction(&mut self, next_direction: Direction) {
+        self.snake.change_direction(next_direction);
     }
 
     pub fn update(&mut self) {
@@ -94,6 +102,7 @@ impl World {
         };
 
         let next_snake_head_idx = self.cell_to_index(row, col);
+        // log(format!("next_snake_head_idx: {}", next_snake_head_idx).as_str());
         self.set_snake_head(next_snake_head_idx);
     }
 
