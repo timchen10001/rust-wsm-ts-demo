@@ -78,51 +78,53 @@ impl World {
     }
 
     pub fn update(&mut self) {
+        let next_cell = self.gen_next_snake_cell();
+        self.snake.body[0] = next_cell;
+        // let snake_idx = self.snake_head_idx();
+        // let (row, col) = self.index_to_cell(snake_idx);
+
+        // let (row, col) = match self.snake.direction {
+        //     Direction::Right => {
+        //         let next_col = (col + 1) % self.width;
+        //         (row, next_col)
+        //     }
+        //     Direction::Left => {
+        //         let next_col = if col > 0 {
+        //             (col - 1) % self.width
+        //         } else {
+        //             self.width - 1
+        //         };
+        //         (row, next_col)
+        //     }
+        //     Direction::Up => {
+        //         let next_row = if row > 0 {
+        //             (row - 1) % self.width
+        //         } else {
+        //             self.width - 1
+        //         };
+        //         (next_row, col)
+        //     }
+        //     Direction::Down => {
+        //         let next_row = (row + 1) % self.width;
+        //         (next_row, col)
+        //     }
+        // };
+
+        // let next_snake_head_idx = self.cell_to_index(row, col);
+        // // log(format!("next_snake_head_idx: {}", next_snake_head_idx).as_str());
+        // self.set_snake_head(next_snake_head_idx);
+    }
+
+    fn gen_next_snake_cell(&self) -> SnakeCell {
         let snake_idx = self.snake_head_idx();
-        let (row, col) = self.index_to_cell(snake_idx);
+        let row = snake_idx / self.width;
 
-        let (row, col) = match self.snake.direction {
-            Direction::Right => {
-                let next_col = (col + 1) % self.width;
-                (row, next_col)
-            }
-            Direction::Left => {
-                let next_col = if col > 0 {
-                    (col - 1) % self.width
-                } else {
-                    self.width - 1
-                };
-                (row, next_col)
-            }
-            Direction::Up => {
-                let next_row = if row > 0 {
-                    (row - 1) % self.width
-                } else {
-                    self.width - 1
-                };
-                (next_row, col)
-            }
-            Direction::Down => {
-                let next_row = (row + 1) % self.width;
-                (next_row, col)
-            }
+        return match self.snake.direction {
+            Direction::Right => SnakeCell((row * self.width) + (snake_idx + 1) % self.width),
+            Direction::Left => SnakeCell((row * self.width) + (snake_idx - 1) % self.width),
+            Direction::Up => SnakeCell((snake_idx - self.width) % self.size),
+            Direction::Down => SnakeCell((snake_idx + self.width) % self.size),
         };
-
-        let next_snake_head_idx = self.cell_to_index(row, col);
-        // log(format!("next_snake_head_idx: {}", next_snake_head_idx).as_str());
-        self.set_snake_head(next_snake_head_idx);
-    }
-
-    fn set_snake_head(&mut self, idx: usize) {
-        self.snake.body[0].0 = idx
-    }
-
-    fn index_to_cell(&self, index: usize) -> (usize, usize) {
-        (index / self.width, index % self.width)
-    }
-
-    fn cell_to_index(&self, row: usize, col: usize) -> usize {
-        (row * self.width) + col
     }
 }
 

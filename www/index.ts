@@ -45,7 +45,7 @@ const keydown$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
 function main(wasm: InitOutput) {
   const CELL_SIZE = 20; // one cell pixel
   const WORLD_WIDTH = 10;
-  const SNAKE_INIT_SIZE = 2;
+  const SNAKE_INIT_SIZE = 3;
   const SNAKE_SPAWN_IDX = Date.now() % (WORLD_WIDTH * WORLD_WIDTH); // random number
 
   const world = World.new(
@@ -61,16 +61,6 @@ function main(wasm: InitOutput) {
 
   canvas.height = worldWidth * CELL_SIZE;
   canvas.width = worldWidth * CELL_SIZE;
-
-  const snakeCellsPtr = world.snake_cells();
-  const snakeLength = world.snake_length();
-  const snakeCells = new Uint32Array(
-    wasm.memory.buffer,
-    snakeCellsPtr,
-    snakeLength
-  );
-
-  console.log("BEFORE", snakeCells);
 
   function drawWorld() {
     ctx.beginPath();
@@ -89,12 +79,21 @@ function main(wasm: InitOutput) {
   }
 
   function drawSnake() {
-    const snakeIdx = world.snake_head_idx();
-    const col = snakeIdx % worldWidth;
-    const row = Math.floor(snakeIdx / worldWidth);
+    const snakeCells = new Uint32Array(
+      wasm.memory.buffer,
+      world.snake_cells(), // byteOffset
+      world.snake_length() // length
+    );
 
-    ctx.beginPath();
-    ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+    snakeCells.forEach((cellIndex, i) => {
+      // debugger
+      const col = cellIndex % worldWidth;
+      const row = Math.floor(cellIndex / worldWidth);
+
+      ctx.fillStyle = i === 0 ? "#7878db" : "#000000";
+      ctx.beginPath();
+      ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+    });
     ctx.stroke();
   }
 
