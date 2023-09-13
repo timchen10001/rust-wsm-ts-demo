@@ -16,7 +16,7 @@ pub enum Direction {
 }
 
 #[wasm_bindgen]
-struct SnakeCell(usize, usize);
+pub struct SnakeCell(usize);
 
 #[wasm_bindgen]
 struct Snake {
@@ -25,15 +25,14 @@ struct Snake {
 }
 
 impl Snake {
-    pub fn new(spawn_index: usize, direction: Direction) -> Snake {
-        Snake {
-            body: vec![SnakeCell(spawn_index, spawn_index)],
-            direction,
-        }
-    }
+    pub fn new(spawn_index: usize, size: usize, direction: Direction) -> Snake {
+        let mut body: Vec<SnakeCell> = vec![];
 
-    pub fn change_direction(&mut self, next_direction: Direction) {
-        self.direction = next_direction;
+        for i in 0..size {
+            body.push(SnakeCell(spawn_index - i));
+        }
+
+        Snake { body, direction }
     }
 }
 
@@ -46,11 +45,11 @@ pub struct World {
 
 #[wasm_bindgen]
 impl World {
-    pub fn new(width: usize, spawn_index: usize, direction: Direction) -> World {
+    pub fn new(width: usize, spawn_index: usize, snake_size: usize, direction: Direction) -> World {
         World {
             width,
             size: width * width,
-            snake: Snake::new(spawn_index, direction),
+            snake: Snake::new(spawn_index, snake_size, direction),
         }
     }
 
@@ -67,7 +66,15 @@ impl World {
     }
 
     pub fn change_snake_direction(&mut self, next_direction: Direction) {
-        self.snake.change_direction(next_direction);
+        self.snake.direction = next_direction
+    }
+
+    pub fn snake_length(&self) -> usize {
+        self.snake.body.len()
+    }
+
+    pub fn snake_cells(&self) -> *const SnakeCell {
+        self.snake.body.as_ptr()
     }
 
     pub fn update(&mut self) {

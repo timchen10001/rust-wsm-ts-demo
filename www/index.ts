@@ -8,7 +8,7 @@ import {
   take,
   tap,
 } from "rxjs";
-import init, { Direction, World } from "snake-game";
+import init, { Direction, InitOutput, World } from "snake-game";
 
 declare global {
   interface Window {
@@ -42,12 +42,18 @@ const keydown$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
   })
 );
 
-function main() {
+function main(wasm: InitOutput) {
   const CELL_SIZE = 20; // one cell pixel
   const WORLD_WIDTH = 10;
+  const SNAKE_INIT_SIZE = 2;
   const SNAKE_SPAWN_IDX = Date.now() % (WORLD_WIDTH * WORLD_WIDTH); // random number
 
-  const world = World.new(WORLD_WIDTH, SNAKE_SPAWN_IDX, direction$.value);
+  const world = World.new(
+    WORLD_WIDTH,
+    SNAKE_SPAWN_IDX,
+    SNAKE_INIT_SIZE,
+    direction$.value
+  );
   const worldWidth = world.width();
 
   const canvas = <HTMLCanvasElement>document.getElementById("snake-canvas");
@@ -55,6 +61,16 @@ function main() {
 
   canvas.height = worldWidth * CELL_SIZE;
   canvas.width = worldWidth * CELL_SIZE;
+
+  const snakeCellsPtr = world.snake_cells();
+  const snakeLength = world.snake_length();
+  const snakeCells = new Uint32Array(
+    wasm.memory.buffer,
+    snakeCellsPtr,
+    snakeLength
+  );
+
+  console.log("BEFORE", snakeCells);
 
   function drawWorld() {
     ctx.beginPath();
@@ -87,13 +103,13 @@ function main() {
     drawSnake();
   }
 
-  function update() {
+  function refreshFrame() {
     const fps = 10;
     setTimeout(() => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       world.update();
       paint();
-      requestAnimationFrame(update);
+      requestAnimationFrame(refreshFrame);
     }, 1000 / fps);
   }
 
@@ -109,7 +125,7 @@ function main() {
     .subscribe();
 
   paint();
-  update();
+  refreshFrame();
 }
 
 wasm$.subscribe(main);
