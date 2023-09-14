@@ -16,6 +16,7 @@ pub enum Direction {
 }
 
 #[wasm_bindgen]
+#[derive(Clone)]
 pub struct SnakeCell(usize);
 
 #[wasm_bindgen]
@@ -78,9 +79,10 @@ impl World {
     }
 
     pub fn update(&mut self) {
+        let temp = self.snake.body.clone();
         let next_head_cell = self.gen_next_snake_cell();
         for i in 1..self.snake.body.len() {
-            self.snake.body[i].0 = self.snake.body[i - 1].0;
+            self.snake.body[i] = SnakeCell(temp[i - 1].0);
         }
         self.snake.body[0] = next_head_cell;
     }
