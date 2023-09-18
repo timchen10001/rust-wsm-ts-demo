@@ -1,18 +1,4 @@
-import {
-  Observable,
-  Subject,
-  defer,
-  delay,
-  distinctUntilChanged,
-  filter,
-  mergeMap,
-  of,
-  repeat,
-  repeatWhen,
-  take,
-  takeUntil,
-  tap,
-} from "rxjs";
+import { Subject, distinctUntilChanged, mergeMap, takeUntil, tap } from "rxjs";
 import { InitOutput, World } from "snake-game";
 import {
   createCellSize$,
@@ -28,7 +14,6 @@ function main(wasm: InitOutput) {
   let CELL_SIZE: number = 0;
   let world: World | undefined;
   let worldWidth: number;
-  let cellSize$: Observable<number>;
   let animationFrameId: number;
   let timer: NodeJS.Timeout;
   const refresher$ = new Subject<void>();
