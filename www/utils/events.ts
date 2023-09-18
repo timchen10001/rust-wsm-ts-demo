@@ -5,6 +5,7 @@ import {
   from,
   fromEvent,
   map,
+  of,
   shareReplay,
   startWith,
   switchMap,
@@ -59,7 +60,8 @@ export const createCellSize$ = (width: number, totalVw = 0.5) => {
     const totalCellPixel = document.documentElement.clientWidth * totalVw;
     return Math.floor(totalCellPixel / width);
   };
-  return resize$.pipe(
+  return of(null).pipe(
+    switchMap(() => resize$),
     startWith(cellSize()),
     map(() => cellSize()),
     distinctUntilChanged()

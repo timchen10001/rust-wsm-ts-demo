@@ -1,8 +1,15 @@
 import {
   Observable,
+  Subject,
+  defer,
+  delay,
   distinctUntilChanged,
   filter,
   mergeMap,
+  of,
+  repeat,
+  repeatWhen,
+  take,
   takeUntil,
   tap,
 } from "rxjs";
@@ -24,6 +31,7 @@ function main(wasm: InitOutput) {
   let cellSize$: Observable<number>;
   let animationFrameId: number;
   let timer: NodeJS.Timeout;
+  const refresher$ = new Subject<void>();
 
   const canvas = <HTMLCanvasElement>document.getElementById("snake-canvas");
   const ctx = canvas.getContext("2d");
@@ -99,35 +107,33 @@ function main(wasm: InitOutput) {
         // destroy previous states - start
         clearTimeout(timer);
         cancelAnimationFrame(animationFrameId);
-        world?.free();
+        refresher$.next();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         // destroy previous states - end
 
         const SNAKE_SPAWN_IDX = randomInt(WORLD_WIDTH * WORLD_WIDTH);
-        cellSize$ = createCellSize$(WORLD_WIDTH);
-        world = World.new(
+        const newWorld = World.new(
           WORLD_WIDTH,
           SNAKE_SPAWN_IDX,
           SNAKE_INIT_SIZE,
           direction$.value
         );
+        world?.free();
+        world = newWorld;
         worldWidth = world.width();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.height = WORLD_WIDTH * CELL_SIZE;
-        canvas.width = WORLD_WIDTH * CELL_SIZE;
         paint();
         refreshFrame();
       }),
       mergeMap((_worldWidth) =>
-        // Listening cell size
-        cellSize$.pipe(
+        createCellSize$(_worldWidth).pipe(
           tap((cellSize) => {
             CELL_SIZE = cellSize;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             canvas.height = _worldWidth * CELL_SIZE;
             canvas.width = _worldWidth * CELL_SIZE;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             paint();
           }),
-          takeUntil(worldWidth$.pipe(filter((w) => _worldWidth !== w)))
+          takeUntil(refresher$)
         )
       )
     )
