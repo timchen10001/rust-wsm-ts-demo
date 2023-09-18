@@ -16,7 +16,7 @@ pub enum Direction {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 pub struct SnakeCell(usize);
 
 #[wasm_bindgen]
@@ -47,15 +47,28 @@ pub struct World {
     width: usize,
     size: usize,
     snake: Snake,
+    reward_cell: usize,
 }
 
 #[wasm_bindgen]
 impl World {
     pub fn new(width: usize, spawn_index: usize, snake_size: usize, direction: Direction) -> World {
+        let size = width * width;
+        let snake = Snake::new(spawn_index, snake_size, direction);
+        let mut reward_cell: usize;
+
+        loop {
+            reward_cell = randomInt(size);
+            if !snake.body.contains(&SnakeCell(reward_cell)) {
+                break;
+            }
+        }
+
         World {
             width,
-            size: width * width,
-            snake: Snake::new(spawn_index, snake_size, direction),
+            size,
+            snake,
+            reward_cell: randomInt(size),
         }
     }
 
@@ -88,6 +101,10 @@ impl World {
 
     pub fn snake_cells(&self) -> *const SnakeCell {
         self.snake.body.as_ptr()
+    }
+
+    pub fn reward_cell(&self) -> usize {
+        self.reward_cell
     }
 
     pub fn update(&mut self) {
@@ -149,7 +166,8 @@ impl World {
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(module = "/www/utils/js2rust.js")]
 extern "C" {
     pub fn log(message: &str);
+    pub fn randomInt(max: usize) -> usize;
 }

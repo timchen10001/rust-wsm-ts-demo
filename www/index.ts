@@ -8,15 +8,7 @@ import {
   tap,
 } from "rxjs";
 import init, { Direction, InitOutput, World } from "snake-game";
-
-declare global {
-  interface Window {
-    log: Console["log"];
-  }
-}
-
-// let rust call the js method.
-window.log = console.log;
+import { randomInt } from "./utils/js2rust";
 
 const wasm$ = from(init()).pipe(shareReplay(1)).pipe(take(1));
 const direction$ = new BehaviorSubject<Direction>(Direction.Right);
@@ -45,7 +37,7 @@ function main(wasm: InitOutput) {
   const CELL_SIZE = 20; // one cell pixel
   const WORLD_WIDTH = 10;
   const SNAKE_INIT_SIZE = 3;
-  const SNAKE_SPAWN_IDX = Date.now() % (WORLD_WIDTH * WORLD_WIDTH); // random number
+  const SNAKE_SPAWN_IDX = randomInt(WORLD_WIDTH * WORLD_WIDTH);
 
   const world = World.new(
     WORLD_WIDTH,
@@ -77,6 +69,16 @@ function main(wasm: InitOutput) {
     ctx.stroke();
   }
 
+  function drawReward() {
+    const rewardCellIdx = world.reward_cell();
+    const col = rewardCellIdx % worldWidth;
+    const row = Math.floor(rewardCellIdx / worldWidth);
+
+    ctx.fillStyle = '#FFA600';
+    ctx.beginPath();
+    ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+  }
+
   function drawSnake() {
     const snakeCells = new Uint32Array(
       wasm.memory.buffer,
@@ -98,6 +100,7 @@ function main(wasm: InitOutput) {
 
   function paint() {
     drawWorld();
+    drawReward();
     drawSnake();
   }
 
