@@ -1,43 +1,14 @@
-import {
-  BehaviorSubject,
-  distinctUntilChanged,
-  from,
-  fromEvent,
-  shareReplay,
-  take,
-  tap,
-} from "rxjs";
-import init, { Direction, InitOutput, World } from "snake-game";
+import { distinctUntilChanged, tap } from "rxjs";
+import { InitOutput, World } from "snake-game";
+import { createCellSize$, direction$, keydown$, wasm$ } from "./utils/events";
 import { randomInt } from "./utils/js2rust";
 
-const wasm$ = from(init()).pipe(shareReplay(1)).pipe(take(1));
-const direction$ = new BehaviorSubject<Direction>(Direction.Right);
-const keydown$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
-  tap((e) => {
-    switch (e.code) {
-      case "ArrowUp":
-        direction$.next(Direction.Up);
-        break;
-      case "ArrowRight":
-        direction$.next(Direction.Right);
-        break;
-      case "ArrowDown":
-        direction$.next(Direction.Down);
-        break;
-      case "ArrowLeft":
-        direction$.next(Direction.Left);
-        break;
-      default:
-        break;
-    }
-  })
-);
-
 function main(wasm: InitOutput) {
-  const CELL_SIZE = 20; // one cell pixel
+  let CELL_SIZE: number;
   const WORLD_WIDTH = 10;
-  const SNAKE_INIT_SIZE = 1;
+  const SNAKE_INIT_SIZE = 2;
   const SNAKE_SPAWN_IDX = randomInt(WORLD_WIDTH * WORLD_WIDTH);
+  const cellSize$ = createCellSize$(WORLD_WIDTH);
 
   const world = World.new(
     WORLD_WIDTH,
@@ -49,9 +20,6 @@ function main(wasm: InitOutput) {
 
   const canvas = <HTMLCanvasElement>document.getElementById("snake-canvas");
   const ctx = canvas.getContext("2d");
-
-  canvas.height = worldWidth * CELL_SIZE;
-  canvas.width = worldWidth * CELL_SIZE;
 
   function drawWorld() {
     ctx.beginPath();
@@ -74,9 +42,10 @@ function main(wasm: InitOutput) {
     const col = rewardCellIdx % worldWidth;
     const row = Math.floor(rewardCellIdx / worldWidth);
 
-    ctx.fillStyle = '#FFA600';
+    ctx.fillStyle = "#FFA600";
     ctx.beginPath();
     ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+    ctx.stroke();
   }
 
   function drawSnake() {
@@ -114,6 +83,18 @@ function main(wasm: InitOutput) {
     }, 1000 / fps);
   }
 
+  // Listening cell size
+  cellSize$
+    .pipe(
+      tap((cellSize) => {
+        CELL_SIZE = cellSize;
+        canvas.height = worldWidth * CELL_SIZE;
+        canvas.width = worldWidth * CELL_SIZE;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        paint();
+      })
+    )
+    .subscribe();
   // Listening keydown code
   keydown$.subscribe();
   // Two way binding direction between js and rust.
