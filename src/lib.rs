@@ -16,6 +16,13 @@ pub enum Direction {
 }
 
 #[wasm_bindgen]
+pub enum GameStatus {
+    WON,
+    LOSS,
+    PLAYED,
+}
+
+#[wasm_bindgen]
 #[derive(PartialEq, Clone, Copy)]
 pub struct SnakeCell(usize);
 
@@ -48,6 +55,7 @@ pub struct World {
     size: usize,
     snake: Snake,
     reward_cell: usize,
+    status: GameStatus,
 }
 
 #[wasm_bindgen]
@@ -62,6 +70,7 @@ impl World {
             size,
             reward_cell,
             snake,
+            status: GameStatus::PLAYED,
         }
     }
 
@@ -91,9 +100,9 @@ impl World {
     }
 
     pub fn change_snake_direction(&mut self, next_direction: Direction) {
-        let next_cell = self.gen_next_snake_cell(&next_direction);
+        let next_cell = self.gen_next_snake_head_cell(&next_direction);
 
-        if self.snake.body.len() > 1 && self.snake.body[1].0 == next_cell.0 {
+        if self.snake_length() > 1 && self.snake.body[1].0 == next_cell.0 {
             return;
         }
 
@@ -113,35 +122,64 @@ impl World {
         self.reward_cell
     }
 
-    pub fn update(&mut self) {
-        let temp = self.snake.body.clone();
-        let snake_cell_size = self.snake.body.len();
-
-        match self.snake.next_cell {
-            Some(cell) => {
-                self.snake.body[0] = cell;
-                self.snake.next_cell = None;
-            }
-            None => {
-                self.snake.body[0] = self.gen_next_snake_cell(&self.snake.direction);
-            }
-        }
-
-        if snake_cell_size > 1 {
-            for i in 1..snake_cell_size {
-                self.snake.body[i] = SnakeCell(temp[i - 1].0);
-            }
-        }
-
-        // consume reward
-        if self.reward_cell == self.snake_head_idx() {
-            let new_cell = SnakeCell(self.snake.body[snake_cell_size - 1].0);
-            self.snake.body.push(new_cell);
-            self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
+    fn check_and_update_head(&mut self, next_head: &SnakeCell) -> bool {
+        if self.snake.body.contains(&next_head) {
+            self.status = GameStatus::LOSS;
+            notify("YOU LOSS!");
+            false
+        } else {
+            self.snake.body[0] = *next_head;
+            true
         }
     }
 
-    fn gen_next_snake_cell(&self, direction: &Direction) -> SnakeCell {
+    pub fn update(&mut self) {
+        match self.status {
+            GameStatus::PLAYED => {
+                let temp = self.snake.body.clone();
+                let snake_cell_size = self.snake.body.len();
+                let can_go_next: bool;
+
+                match self.snake.next_cell {
+                    Some(memoried_cell) => {
+                        can_go_next = self.check_and_update_head(&memoried_cell);
+                        self.snake.next_cell = None;
+                    }
+                    None => {
+                        let next_head = self.gen_next_snake_head_cell(&self.snake.direction);
+                        can_go_next = self.check_and_update_head(&next_head);
+                    }
+                }
+
+                if !can_go_next {
+                    return;
+                }
+
+                if snake_cell_size > 1 {
+                    for i in 1..snake_cell_size {
+                        self.snake.body[i] = SnakeCell(temp[i - 1].0);
+                    }
+                }
+
+                // consume reward
+                if self.reward_cell == self.snake_head_idx() {
+                    if self.snake_length() < self.size {
+                        self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
+                    } else {
+                        self.status = GameStatus::WON;
+                        notify("You Won!");
+                    }
+
+                    self.snake
+                        .body
+                        .push(SnakeCell(self.snake.body[snake_cell_size - 1].0));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn gen_next_snake_head_cell(&self, direction: &Direction) -> SnakeCell {
         let snake_idx = self.snake_head_idx();
         let row = snake_idx / self.width;
 
@@ -186,4 +224,5 @@ impl World {
 extern "C" {
     pub fn log(message: &str);
     pub fn randomInt(max: usize) -> usize;
+    pub fn notify(message: &str);
 }
