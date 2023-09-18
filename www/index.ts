@@ -36,7 +36,7 @@ const keydown$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
 function main(wasm: InitOutput) {
   const CELL_SIZE = 20; // one cell pixel
   const WORLD_WIDTH = 10;
-  const SNAKE_INIT_SIZE = 3;
+  const SNAKE_INIT_SIZE = 1;
   const SNAKE_SPAWN_IDX = randomInt(WORLD_WIDTH * WORLD_WIDTH);
 
   const world = World.new(

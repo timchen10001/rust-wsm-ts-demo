@@ -55,21 +55,27 @@ impl World {
     pub fn new(width: usize, spawn_index: usize, snake_size: usize, direction: Direction) -> World {
         let size = width * width;
         let snake = Snake::new(spawn_index, snake_size, direction);
-        let mut reward_cell: usize;
-
-        loop {
-            reward_cell = randomInt(size);
-            if !snake.body.contains(&SnakeCell(reward_cell)) {
-                break;
-            }
-        }
+        let reward_cell = World::gen_reward_cell(size, &snake.body);
 
         World {
             width,
             size,
+            reward_cell,
             snake,
-            reward_cell: randomInt(size),
         }
+    }
+
+    fn gen_reward_cell(max: usize, snake_body: &Vec<SnakeCell>) -> usize {
+        let mut reward_cell: usize;
+
+        loop {
+            reward_cell = randomInt(max);
+            if !snake_body.contains(&SnakeCell(reward_cell)) {
+                break;
+            }
+        }
+
+        reward_cell
     }
 
     pub fn width(&self) -> usize {
@@ -109,6 +115,7 @@ impl World {
 
     pub fn update(&mut self) {
         let temp = self.snake.body.clone();
+        let snake_cell_size = self.snake.body.len();
 
         match self.snake.next_cell {
             Some(cell) => {
@@ -120,8 +127,17 @@ impl World {
             }
         }
 
-        for i in 1..self.snake.body.len() {
-            self.snake.body[i] = SnakeCell(temp[i - 1].0);
+        if snake_cell_size > 1 {
+            for i in 1..snake_cell_size {
+                self.snake.body[i] = SnakeCell(temp[i - 1].0);
+            }
+        }
+
+        // consume reward
+        if self.reward_cell == self.snake_head_idx() {
+            let new_cell = SnakeCell(self.snake.body[snake_cell_size - 1].0);
+            self.snake.body.push(new_cell);
+            self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
         }
     }
 
