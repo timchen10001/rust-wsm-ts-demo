@@ -9,7 +9,45 @@
   <body>
     <div class="content-wrapper">
       <canvas id="snake-canvas"></canvas>
+      <div class="game-panel">
+        <div class="flex">
+          <div class="label">Status:</div>
+          <div class="game-status">NONE</div>
+        </div>
+        <div class="flex">
+          <div class="label">Points:</div>
+          <div class="game-points">0</div>
+        </div>
+        <div class="flex">
+          <div class="label">Width:</div>
+          <input
+            id="world-width"
+            type="number"
+            value="10"
+            placeholder="10"
+            max="30"
+            min="3"
+            onchange="worldWidthChange(event)"
+          />
+        </div>
+      </div>
     </div>
+    <script>
+      function worldWidthChange(e) {
+        if (String(e.target.value).length > 2) {
+          e.preventDefault();
+          e.target.value = Number(String(e.target.value).slice(0, 2));
+          return false;
+        }
+        const valueAsNumber = Number(e.target.value);
+        if (event.target.valueAsNumber < 3 || event.target.valueAsNumber > 30) {
+          e.preventDefault();
+          e.target.value = Number(10);
+          alert("World Width must within [3, 30]");
+          return false;
+        }
+      }
+    </script>
     <script src="./bootstrap.js"></script>
   </body>
 </html>

@@ -55,7 +55,7 @@ pub struct World {
     size: usize,
     snake: Snake,
     reward_cell: usize,
-    status: GameStatus,
+    status: Option<GameStatus>,
 }
 
 #[wasm_bindgen]
@@ -70,7 +70,7 @@ impl World {
             size,
             reward_cell,
             snake,
-            status: GameStatus::PLAYED,
+            status: Some(GameStatus::PLAYED),
         }
     }
 
@@ -124,7 +124,7 @@ impl World {
 
     fn check_and_update_head(&mut self, next_head: &SnakeCell) -> bool {
         if self.snake.body.contains(&next_head) {
-            self.status = GameStatus::LOSS;
+            self.status = Some(GameStatus::LOSS);
             notify("YOU LOSS!");
             false
         } else {
@@ -135,7 +135,7 @@ impl World {
 
     pub fn update(&mut self) {
         match self.status {
-            GameStatus::PLAYED => {
+            Some(GameStatus::PLAYED) => {
                 let temp = self.snake.body.clone();
                 let snake_cell_size = self.snake.body.len();
                 let can_go_next: bool;
@@ -166,7 +166,7 @@ impl World {
                     if self.snake_length() < self.size {
                         self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
                     } else {
-                        self.status = GameStatus::WON;
+                        self.status = Some(GameStatus::WON);
                         notify("You Won!");
                     }
 

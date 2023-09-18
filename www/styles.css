@@ -1,3 +1,23 @@
+.label {
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+}
+
+.game-panel {
+  margin-top: 20px;
+  width: 50%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-around;
+  gap: 16px;
+}
+
 .content-wrapper {
   position: absolute;
   top: 0;
@@ -9,4 +29,39 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
+}
+
+#world-width {
+  width: 30px;
+  padding: 2px 4px;
+  border: 1px solid #000;
+  border-radius: 5px;
+}
+
+input {
+  display: block;
+  color: currentColor;
+  font: inherit;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  padding: 4px;
+  background: none;
+  outline: 0;
+  box-sizing: border-box;
+  resize: none;
+  caret-color: #000000;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-appearance: none;
+  margin: 0;
 }

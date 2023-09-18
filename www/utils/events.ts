@@ -1,11 +1,10 @@
 import {
   BehaviorSubject,
   distinctUntilChanged,
+  filter,
   from,
   fromEvent,
   map,
-  mergeMap,
-  of,
   shareReplay,
   startWith,
   switchMap,
@@ -43,16 +42,26 @@ export const resize$ = fromEvent<UIEvent>(window, "resize", {
   passive: true,
 });
 
+// World Width
+export const worldWidth$ = wasm$.pipe(
+  map(() => document.getElementById("world-width")),
+  filter((worldWidthEl) => !!worldWidthEl),
+  switchMap((worldWidthEl) => fromEvent<InputEvent>(worldWidthEl, "change")),
+  map((event) => <HTMLInputElement>event.target),
+  map((el) => el.valueAsNumber),
+  startWith(10),
+  distinctUntilChanged()
+);
+
 /** Cell Size */
 export const createCellSize$ = (width: number, totalVw = 0.5) => {
-  const cellSize = (width: number, totalVw: number) => {
+  const cellSize = () => {
     const totalCellPixel = document.documentElement.clientWidth * totalVw;
     return Math.floor(totalCellPixel / width);
   };
-
   return resize$.pipe(
-    startWith(cellSize(width, totalVw)),
-    map(() => cellSize(width, totalVw)),
+    startWith(cellSize()),
+    map(() => cellSize()),
     distinctUntilChanged()
   );
 };

@@ -1,22 +1,29 @@
-import { distinctUntilChanged, tap } from "rxjs";
+import {
+  Observable,
+  distinctUntilChanged,
+  filter,
+  mergeMap,
+  takeUntil,
+  tap,
+} from "rxjs";
 import { InitOutput, World } from "snake-game";
-import { createCellSize$, direction$, keydown$, wasm$ } from "./utils/events";
+import {
+  createCellSize$,
+  direction$,
+  keydown$,
+  wasm$,
+  worldWidth$,
+} from "./utils/events";
 import { randomInt } from "./utils/js2rust";
 
 function main(wasm: InitOutput) {
-  let CELL_SIZE: number;
-  const WORLD_WIDTH = 10;
-  const SNAKE_INIT_SIZE = 2;
-  const SNAKE_SPAWN_IDX = randomInt(WORLD_WIDTH * WORLD_WIDTH);
-  const cellSize$ = createCellSize$(WORLD_WIDTH);
-
-  const world = World.new(
-    WORLD_WIDTH,
-    SNAKE_SPAWN_IDX,
-    SNAKE_INIT_SIZE,
-    direction$.value
-  );
-  const worldWidth = world.width();
+  let SNAKE_INIT_SIZE = 2;
+  let CELL_SIZE: number = 0;
+  let world: World | undefined;
+  let worldWidth: number;
+  let cellSize$: Observable<number>;
+  let animationFrameId: number;
+  let timer: NodeJS.Timeout;
 
   const canvas = <HTMLCanvasElement>document.getElementById("snake-canvas");
   const ctx = canvas.getContext("2d");
@@ -68,31 +75,61 @@ function main(wasm: InitOutput) {
   }
 
   function paint() {
+    if (!world) return;
     drawWorld();
     drawReward();
     drawSnake();
   }
 
   function refreshFrame() {
+    if (!world) return;
     const fps = 10;
-    setTimeout(() => {
+    timer = setTimeout(() => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       world.update();
       paint();
-      requestAnimationFrame(refreshFrame);
+      animationFrameId = requestAnimationFrame(refreshFrame);
     }, 1000 / fps);
   }
 
-  // Listening cell size
-  cellSize$
+  // Listening world width
+  worldWidth$
     .pipe(
-      tap((cellSize) => {
-        CELL_SIZE = cellSize;
-        canvas.height = worldWidth * CELL_SIZE;
-        canvas.width = worldWidth * CELL_SIZE;
+      tap((WORLD_WIDTH) => {
+        // destroy previous states - start
+        clearTimeout(timer);
+        cancelAnimationFrame(animationFrameId);
+        world?.free();
+        // destroy previous states - end
+
+        const SNAKE_SPAWN_IDX = randomInt(WORLD_WIDTH * WORLD_WIDTH);
+        cellSize$ = createCellSize$(WORLD_WIDTH);
+        world = World.new(
+          WORLD_WIDTH,
+          SNAKE_SPAWN_IDX,
+          SNAKE_INIT_SIZE,
+          direction$.value
+        );
+        worldWidth = world.width();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.height = WORLD_WIDTH * CELL_SIZE;
+        canvas.width = WORLD_WIDTH * CELL_SIZE;
         paint();
-      })
+        refreshFrame();
+      }),
+      mergeMap((_worldWidth) =>
+        // Listening cell size
+        cellSize$.pipe(
+          tap((cellSize) => {
+            CELL_SIZE = cellSize;
+            canvas.height = _worldWidth * CELL_SIZE;
+            canvas.width = _worldWidth * CELL_SIZE;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            paint();
+          }),
+          takeUntil(worldWidth$.pipe(filter((w) => _worldWidth !== w)))
+        )
+      )
     )
     .subscribe();
   // Listening keydown code
@@ -102,12 +139,9 @@ function main(wasm: InitOutput) {
     .asObservable()
     .pipe(
       distinctUntilChanged(),
-      tap((nextDirection) => world.change_snake_direction(nextDirection))
+      tap((nextDirection) => world?.change_snake_direction(nextDirection))
     )
     .subscribe();
-
-  paint();
-  refreshFrame();
 }
 
 wasm$.subscribe(main);
