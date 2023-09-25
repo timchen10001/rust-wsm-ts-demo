@@ -1,9 +1,17 @@
-import { Subject, distinctUntilChanged, mergeMap, takeUntil, tap } from "rxjs";
+import {
+  Subject,
+  distinctUntilChanged,
+  filter,
+  mergeMap,
+  takeUntil,
+  tap,
+} from "rxjs";
 import { InitOutput, World } from "snake-game";
 import {
   createCellSize$,
   direction$,
   keydown$,
+  startGame$,
   wasm$,
   worldWidth$,
 } from "./utils/events";
@@ -123,6 +131,9 @@ function main(wasm: InitOutput) {
       )
     )
     .subscribe();
+
+  // Listening Game Start
+  startGame$.pipe(tap(() => world.start_game())).subscribe();
   // Listening keydown code
   keydown$.subscribe();
   // Two way binding direction between js and rust.

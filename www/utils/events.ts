@@ -67,3 +67,8 @@ export const createCellSize$ = (width: number, totalVw = 0.5) => {
     distinctUntilChanged()
   );
 };
+
+export const startGame$ = fromEvent(
+  <HTMLButtonElement>document.getElementById("start-game-btn"),
+  "click"
+);

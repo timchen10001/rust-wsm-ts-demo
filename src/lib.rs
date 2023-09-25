@@ -70,7 +70,7 @@ impl World {
             size,
             reward_cell,
             snake,
-            status: Some(GameStatus::PLAYED),
+            status: None,
         }
     }
 
@@ -120,6 +120,10 @@ impl World {
 
     pub fn reward_cell(&self) -> usize {
         self.reward_cell
+    }
+
+    pub fn start_game(&mut self) {
+        self.status = Some(GameStatus::PLAYED);
     }
 
     fn check_and_update_head(&mut self, next_head: &SnakeCell) -> bool {
